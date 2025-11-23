@@ -1,10 +1,40 @@
+import { useEffect } from "react";
 import { useFabricContext } from "../hooks/useFabric";
 import Toolbars from "./Toolbars";
 
 const CanvasDrawer = () => {
-  const { htmlCanvasRef, activeTool, setActiveTool } = useFabricContext();
+  const {
+    htmlCanvasRef,
+    activeTool,
+    setActiveTool,
+    enableTempMoveMode,
+    restoreActiveTool,
+  } = useFabricContext();
 
-  console.log("🚀 ~ Canvas.tsx:8 ~ CanvasDrawer ~ activeTool:", activeTool);
+  useEffect(() => {
+    let isSpaceDown = false;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Space" && !isSpaceDown) {
+        e.preventDefault();
+        isSpaceDown = true;
+        enableTempMoveMode();
+      }
+    };
+
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "Space") {
+        e.preventDefault();
+        isSpaceDown = false;
+        restoreActiveTool();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, []);
 
   return (
     <>

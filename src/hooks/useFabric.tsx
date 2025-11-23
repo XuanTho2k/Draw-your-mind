@@ -15,6 +15,9 @@ const FabricContext = createContext<any>(undefined);
 export const FabricProvider = ({ children }: { children: any }) => {
   const canvasRef = useRef<fabric.Canvas>(null);
   const [activeTool, setActiveTool] = useState<ToolType>("select");
+
+  const [savedActiveTool, setSavedActiveTool] = useState<ToolType>("select");
+
   const htmlCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const resizeCanvas = useCallback(() => {
@@ -27,6 +30,26 @@ export const FabricProvider = ({ children }: { children: any }) => {
     canvasRef.current.renderAll();
   }, []);
 
+  const activeToolRef = useRef(activeTool);
+  const savedActiveToolRef = useRef(savedActiveTool);
+  useEffect(() => {
+    activeToolRef.current = activeTool;
+    savedActiveToolRef.current = savedActiveTool;
+  }, [activeTool, savedActiveTool]);
+
+  function saveActiveTool() {
+    setSavedActiveTool(activeToolRef.current);
+  }
+
+  function restoreActiveTool() {
+    setActiveTool(savedActiveToolRef.current);
+  }
+
+  function enableTempMoveMode() {
+    saveActiveTool();
+    setActiveTool("move");
+  }
+
   useEffect(() => {
     if (!htmlCanvasRef.current) return;
 
@@ -37,7 +60,7 @@ export const FabricProvider = ({ children }: { children: any }) => {
     window.addEventListener("resize", resizeCanvas);
 
     return () => {
-      window.removeEventListener("reisze", resizeCanvas);
+      window.removeEventListener("resize", resizeCanvas);
       canvasRef.current?.dispose();
     };
   }, [resizeCanvas]);
@@ -50,11 +73,18 @@ export const FabricProvider = ({ children }: { children: any }) => {
     } else {
       canvasRef.current.defaultCursor = "default";
     }
-  });
+  }, [activeTool]);
 
   return (
     <FabricContext.Provider
-      value={{ htmlCanvasRef, activeTool, setActiveTool }}
+      value={{
+        htmlCanvasRef,
+        activeTool,
+        setActiveTool,
+        saveActiveTool,
+        restoreActiveTool,
+        enableTempMoveMode,
+      }}
     >
       {children}
     </FabricContext.Provider>
